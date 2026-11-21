@@ -3,6 +3,7 @@
   "short_name": "Pissarra",
   "description": "Pissarra de bàsquet: exercicis, entrenaments, equips i partits.",
   "lang": "ca",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,9 +1,9 @@
 /* Pissarra i entrenaments — service worker
    Guarda la "carcassa" de l'app perquè s'obri ràpid i no es quedi en blanc sense cobertura.
    Les dades (equips, entrenaments…) sempre es demanen al servidor: mai es guarden aquí. */
-const V = 'pissarra-v1';
+const V = 'pissarra-v2';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
+self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const r = e.request;
