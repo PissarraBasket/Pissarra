@@ -469,7 +469,7 @@ TEAMS.forEach(t=>{if(t.collab&&(inClub()||!t.collab.length))w['shares/'+UID+'_'+
 if(ADMIN)Object.keys(EXOWN).forEach(o=>{if(o==='base'||o===UID)return;w['exercises/'+o]={ownerName:NAMES[o]||'',list:E.filter(e=>e.by===o),cats:EXCATS[o]||{}}});
 if(ADMIN&&BASELOADED)w['exercises/base']={ownerName:'Biblioteca base',list:E.filter(e=>e.by==='base')};
 w['exercises/'+UID]={ownerName:PROFILE.name,list:E.filter(e=>e.by===UID),cats:Object.fromEntries(Object.entries(CATS).filter(([k])=>k.startsWith('c_')))};
-for(const p in w){const j=JSON.stringify(w[p]);if(SYNC[p]===j)continue;SYNC[p]=j;if(p===tdp)S.rsig=sigOf(w[p]);S.wip=(S.wip||0)+1;DB.doc(p).set(JSON.parse(j)).then(()=>{S.wip--;S.lastW=Date.now()}).catch(e=>{S.wip--;delete SYNC[p];fail(e)})}}
+for(const p in w){const j=JSON.stringify(w[p]);if(SYNC[p]===j)continue;if(SYNC[p]===undefined&&LASTGET[p]!==undefined){const same=LASTGET[p]===j;delete LASTGET[p];if(same){SYNC[p]=j;continue}}SYNC[p]=j;if(p===tdp)S.rsig=sigOf(w[p]);S.wip=(S.wip||0)+1;DB.doc(p).set(JSON.parse(j)).then(()=>{S.wip--;S.lastW=Date.now()}).catch(e=>{S.wip--;delete SYNC[p];fail(e)})}}
 function migRb(){for(const a in GS){if(a==='coach')continue;const g=GS[a];if(g&&g.ks&&!g.rb){const i=g.ks.indexOf('defensa');if(i>=0&&!g.ks.includes('rebote'))g.ks.splice(i+1,0,'rebote');g.rb=1}}}
 function applyGS(){migRb();const mg={};for(const a in GS){if(a==='coach')continue;const k=gk(+a);if(k!==+a){if(!GS[k]&&!mg[k])mg[k]=GS[a];delete GS[a]}}Object.assign(GS,mg);for(const a in GS)GUIDE[a]=Object.assign({},GUIDE[a],GS[a])}
 async function loadTeamOnline(){loadTeamData(true);S.rd=null;if(!TEAM)return;let d;const sdP=TEAM.shared?DB.doc(P('sd_'+TEAM.id)).get().catch(()=>null):null;
@@ -489,7 +489,7 @@ if(n.perm!==TEAM.perm){Object.assign(TEAM,n);toast(n.perm==='edit'?'El primer en
 TEAM=STEAMS.find(t=>t.id===n.id&&t.owner===n.owner)||TEAM}
 if(!TEAM&&STEAMS.length&&S.phase==='app'){TEAM=STEAMS[0];S.tf=tfFor(TEAM);S.tnew=false;switchData().then(()=>safeRender());return}
 safeRender()}
-async function loadShares(){try{const ad=await DB.doc(P('archive')).get();ARCH=ad.exists?(cl(ad.data()).teams||[]):[]}catch(e){ARCH=[]}try{const sn=await DB.collection('shares').get();onSharesInit(sn)}catch(e){}}
+async function loadShares(){const [ad,sn]=await Promise.all([DB.doc(P('archive')).get().catch(()=>null),DB.collection('shares').get().catch(()=>null)]);try{ARCH=ad&&ad.exists?(cl(ad.data()).teams||[]):[]}catch(e){ARCH=[]}try{if(sn)onSharesInit(sn)}catch(e){}}
 function onSharesInit(snap){STEAMS=[];addArch();snap.docs.forEach(d=>{const x=cl(d.data())||{};if(!x.owner||x.owner===UID||!x.team)return;const m=(x.members||[]).find(q=>q.uid===UID);if(!m)return;STEAMS.push({...x.team,shared:true,owner:x.owner,ownerName:x.ownerName||'',perm:m.perm==='edit'?'edit':'view'})})}
 async function switchData(skip){if(skip){loadTeamData(true);return}if(ONLINE)await loadTeamOnline();else loadTeamData()}
 function safeRender(){const a=document.activeElement;if(S.phase==='app'&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))&&!ED.drag)render()}
@@ -499,13 +499,13 @@ rebuildDG();
 if(UNS&&ids.length)UNS.profiles(ids).then(ps=>{ids.forEach(id=>{if(ps&&ps[id]&&ps[id].name)NAMES[id]=ps[id].name});safeRender()}).catch(()=>{});
 safeRender()}
 async function enter(){ONLINE=true;E.length=BN;
-const [td,,meEx]=await Promise.all([DB.doc(P('teams')).get(),loadShares(),DB.doc('exercises/'+UID).get()]),tx=td.exists?cl(td.data()):{};TEAMS=tx.teams||[];TEAM=ALLT().find(t=>t.id===tx.active)||TEAMS[0]||STEAMS[0]||null;
+const [td,,meEx,bd0]=await Promise.all([DB.doc(P('teams')).get(),loadShares(),DB.doc('exercises/'+UID).get(),DB.doc('exercises/base').get().catch(()=>null)]),tx=td.exists?cl(td.data()):{};TEAMS=tx.teams||[];TEAM=ALLT().find(t=>t.id===tx.active)||TEAMS[0]||STEAMS[0]||null;
 await loadTeamOnline();
-try{const bd=await DB.doc('exercises/base').get();if(bd.exists){const bx=cl(bd.data());(bx.list||[]).forEach(e=>E.push({...e,by:'base',custom:true}));BASELOADED=true}}catch(e){}
+try{const bd=bd0;if(bd&&bd.exists){const bx=cl(bd.data());(bx.list||[]).forEach(e=>E.push({...e,by:'base',custom:true}));BASELOADED=true}}catch(e){}
 const me=meEx;if(me.exists){const x=cl(me.data());Object.assign(CATS,x.cats||{});(x.list||[]).forEach(e=>E.push({...e,by:UID,custom:true}))}
 rebuildDG();S.tf=tfFor(TEAM);S.tnew=!TEAM;S.tab=ADMIN?'admin':(!TEAM&&isCoord()?'club':'guia');
 if(UNEX)UNEX();UNEX=DB.collection('exercises').onSnapshot(onEx,()=>{});
-resub();checkInv();
+resub();checkInv();PFC={};
 S.loading=false;S.phase='app';render()}
 async function migrateLocal(){try{if(localStorage.getItem('mb_migrated'))return;
 const lt=JSON.parse(localStorage.getItem('mb_teams')||'[]'),lc=JSON.parse(localStorage.getItem('mb_custom')||'[]'),dgm=JSON.parse(localStorage.getItem('mb_dg')||'{}');
@@ -572,7 +572,12 @@ if(inv){try{await joinClub(inv)}catch(e){fail(e);return}await migrateLocal();awa
 function resetState(){if(S.ad){S.ad.loaded=false;S.ad.loading=false;S.ad.users=[];S.ad.clubs=[];S.ad.td=null}S.loading=true;SYNC={};NAMES={};NOTES=[];SESS=[];CLUB=null;INV=null;CNOTES=[];if(UNCN)UNCN();UNCN=null;S.sel=null;S.nt='';S.newIds=null;S.pr=null;TEAMS=[];STEAMS=[];if(UNTD){try{UNTD()}catch(e){}}UNTD=null;TEAM=null;saved=[];PL=[];MT=[];PROFILE=null}
 /* ===== Connexió amb Apps Script (servidor + full de càlcul) ===== */
 var CONN={token:null},PENDING=0,WATCH=[],KICK=null,WQ={};
-function gcall(fn){var args=[].slice.call(arguments,1);var write=/^(setDoc|updateDoc|deleteDoc)$/.test(fn);if(write)PENDING++;
+var PFC={},PFT=null,PFP=null,LASTGET={};
+function pfFill(r){PFC={};Object.keys((r&&r.docs)||{}).forEach(function(p){PFC['getDoc|'+p]=r.docs[p]});Object.keys((r&&r.cols)||{}).forEach(function(k){PFC['list|'+k]=r.cols[k]});clearTimeout(PFT);PFT=setTimeout(function(){PFC={}},15000)}
+function startPf(){if(!PFP)PFP=gcall('boot').then(pfFill).catch(function(){});return PFP}
+function gcall(fn){var args=[].slice.call(arguments,1);
+if(fn==='getDoc'||fn==='list'){var pk=fn+'|'+args[0]+(fn==='list'?'|'+(args[1]?JSON.stringify(args[1]):'null'):'');if(Object.prototype.hasOwnProperty.call(PFC,pk)){var pv=PFC[pk];delete PFC[pk];return Promise.resolve(pv)}}
+var write=/^(setDoc|updateDoc|deleteDoc)$/.test(fn);if(write)PENDING++;
 if(!/^https:\/\/script\.google\.com\//.test(window.PISSARRA_API||'')){if(write)PENDING--;return Promise.reject(new Error('Falta configurar config.js'))}
 var ac=typeof AbortController!=='undefined'?new AbortController():null,tm=ac?setTimeout(function(){ac.abort()},60000):0;
 return fetch(window.PISSARRA_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({t:CONN.token,f:fn,a:args}),signal:ac?ac.signal:undefined}).then(function(r){return r.text()}).then(function(s){clearTimeout(tm);if(write)PENDING--;var o;try{o=JSON.parse(s)}catch(e){throw new Error('resposta no vàlida')}if(o.ok)return o.r;var e=new Error(o.err);e.code=o.code;throw e},function(e){clearTimeout(tm);if(write)PENDING--;throw new Error((e&&e.message)||'xarxa')})}
@@ -590,7 +595,7 @@ setInterval(function(){if(!document.hidden&&CONN.token)pollAll()},20000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&CONN.token)schedPoll()});
 function mkQuery(path,where){return{where:function(k,op,v){return mkQuery(path,{k:k,v:v})},get:function(){return gcall('list',path,where||null).then(snapCol)},onSnapshot:function(cb,err){return watchFn('col',path,where||null,cb,err)}}}
 var DBX={doc:function(path){return{
-get:function(){return gcall('getDoc',path).then(function(d){return snapDoc(path,d)})},
+get:function(){return gcall('getDoc',path).then(function(d){if(d!==null&&d!==undefined&&/\/(profile|teams|t_[^\/]+)$|^exercises\//.test(path))LASTGET[path]=JSON.stringify(d);return snapDoc(path,d)})},
 set:function(v){return qwrite(path,function(){return gcall('setDoc',path,v)}).then(function(r){kickAll();return r})},
 update:function(v){return qwrite(path,function(){return gcall('updateDoc',path,v)}).then(function(r){kickAll();return r})},
 delete:function(){return qwrite(path,function(){return gcall('deleteDoc',path)}).then(function(r){kickAll();return r})},
@@ -601,9 +606,9 @@ function errTxt(e){var c=e&&e.code;return c==='invite'?'El registro es solo por 
 async function boot(){
 DB=DBX;UNS={profiles:function(ids){return gcall('profiles',ids)}};
 let tok=null;try{tok=localStorage.getItem('mb_tok')}catch(e){}
-if(tok){CONN.token=tok;try{const u=await gcall('me');await enterUser({token:tok,uid:u.uid,name:u.name,email:u.email,admin:!!u.admin,grant:u.grant||null});return}catch(e){if(!(e&&e.code==='auth')){S.phase='noaccess';render();return}CONN.token=null;try{localStorage.removeItem('mb_tok')}catch(x){}}}
+if(tok){CONN.token=tok;startPf();try{const u=await gcall('me');await enterUser({token:tok,uid:u.uid,name:u.name,email:u.email,admin:!!u.admin,grant:u.grant||null});return}catch(e){if(!(e&&e.code==='auth')){S.phase='noaccess';render();return}CONN.token=null;try{localStorage.removeItem('mb_tok')}catch(x){}}}
 S.lf=blankLf();S.phase='unlock';render()}
-async function enterUser(o){CONN.token=o.token;GRANT=o.grant||null;try{if(typeof o.admin==='boolean')ADMIN=o.admin;else{const m=await gcall('me');ADMIN=!!m.admin}}catch(e){ADMIN=false}document.body.classList.toggle('superonly',ADMIN);BASELOADED=false;try{localStorage.setItem('mb_tok',o.token)}catch(e){}
+async function enterUser(o){CONN.token=o.token;startPf();try{await PFP}catch(e){}GRANT=o.grant||null;try{if(typeof o.admin==='boolean')ADMIN=o.admin;else{const m=await gcall('me');ADMIN=!!m.admin}}catch(e){ADMIN=false}document.body.classList.toggle('superonly',ADMIN);BASELOADED=false;try{localStorage.setItem('mb_tok',o.token)}catch(e){}
 UID=CUID=o.uid;AID='';ME={name:o.name,email:o.email};
 try{const pd=await DB.doc(P('profile')).get();PROFILE=pd.exists?cl(pd.data()):null;if(!PROFILE){PROFILE={name:o.name,email:o.email,lang:LANG};await DB.doc(P('profile')).set(PROFILE)}}catch(e){S.phase='noaccess';render();return}
 PROFILE.name=PROFILE.name||o.name;PROFILE.email=o.email;
@@ -611,7 +616,7 @@ if(PROFILE.lang){LANG=PROFILE.lang;try{localStorage.setItem('mb_lang',LANG)}catc
 S.lf=blankLf();await proceed()}
 async function proceed(){if(ADMIN){if(!PROFILE.roleDone){PROFILE.roleDone=true;try{await DB.doc(P('profile')).set(PROFILE)}catch(e){}}await enter();return}if(PROFILE.roleDone||PROFILE.clubId)await enter();else await afterLogin()}
 async function logout(){persist();for(let i=0;i<40&&PENDING>0;i++)await new Promise(r=>setTimeout(r,250));
-try{await gcall('logout')}catch(e){}CONN.token=null;try{localStorage.removeItem('mb_tok')}catch(e){}
+try{await gcall('logout')}catch(e){}CONN.token=null;PFP=null;PFC={};LASTGET={};try{localStorage.removeItem('mb_tok')}catch(e){}
 UNSUBS.forEach(u=>{try{u()}catch(e){}});UNSUBS=[];if(UNEX){UNEX();UNEX=null}
 GRANT=null;ADMIN=false;BASELOADED=false;resetState();E.length=BN;for(const k of Object.keys(CATS))if(k.startsWith('c_'))delete CATS[k];rebuildDG();S.tab='guia';S.plan={name:'',date:'',age:10,target:60,items:[],goals:[],focus:[]};GS={};
 S.lf=blankLf();S.phase='unlock';render();toast('Sesión cerrada')}
@@ -1526,7 +1531,7 @@ document.addEventListener('pointerup',pend);document.addEventListener('pointerca
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.target.dataset&&ev.target.dataset.lf!==undefined){const bt=document.querySelector('[data-act=login],[data-act=unlock],[data-act=confirm],[data-act=resetreq],[data-act=resetpw]');if(bt){ev.preventDefault();document.querySelectorAll('[data-lf]').forEach(x=>{S.lf[x.dataset.lf]=x.value});bt.click()}return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-21-general2';
+const APPBUILD='2026-11-21-rapid1';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
