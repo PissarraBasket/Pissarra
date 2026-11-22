@@ -2125,10 +2125,26 @@ document.addEventListener('pointerup',pend);document.addEventListener('pointerca
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.target.dataset&&ev.target.dataset.lf!==undefined){const bt=document.querySelector('[data-act=login],[data-act=unlock],[data-act=confirm],[data-act=resetreq],[data-act=resetpw]');if(bt){ev.preventDefault();document.querySelectorAll('[data-lf]').forEach(x=>{S.lf[x.dataset.lf]=x.value});bt.click()}return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-22-esc6';
+const APPBUILD='2026-11-22-esc7';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
-</body>
+<style>#instb{position:fixed;left:8px;right:8px;top:8px;z-index:9999;max-width:520px;margin:0 auto;background:#fff;color:#111;border:1px solid #d8dde6;border-left:5px solid #ff5a14;border-radius:12px;padding:10px 12px;display:none;gap:10px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.25);font:14px/1.3 system-ui,sans-serif}#instb img{width:40px;height:40px;border-radius:10px;flex:none}#instb b{display:block}#instb small{display:block;color:#555;margin-top:2px}#instb button{font:inherit}#instb .ib{background:#ff5a14;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:700;white-space:nowrap}#instb .ix{background:none;border:0;color:#667;font-size:20px;padding:0 4px;cursor:pointer}@media print{#instb{display:none!important}}</style><script>(function(){var KEY='mb_inst_hide',DEF=null;
+function lang(){try{return typeof LANG!=='undefined'?LANG:'ca'}catch(e){return 'ca'}}
+function T(es,ca){return lang()==='es'?es:ca}
+function hidden(){try{var v=+localStorage.getItem(KEY)||0;return v>Date.now()}catch(e){return false}}
+function standalone(){try{return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true}catch(e){return false}}
+var ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),safari=/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
+function close(days){var b=document.getElementById('instb');if(b)b.style.display='none';try{localStorage.setItem(KEY,String(Date.now()+days*864e5))}catch(e){}}
+function show(kind){if(standalone()||hidden())return;var b=document.getElementById('instb');if(!b){b=document.createElement('div');b.id='instb';b.setAttribute('role','region');document.body.appendChild(b)}
+var ic=document.querySelector('link[rel="apple-touch-icon"]')||document.querySelector('link[rel="icon"]'),src=ic?ic.href:'';
+var body=kind==='ios'?'<b>'+T('Instala la Pizarra en tu iPhone','Instal·la la Pissarra al teu iPhone')+'</b><small>1. '+T('Toca Compartir (abajo)','Toca Compartir (a baix)')+' ⎋<br>2. '+T('Elige «Añadir a pantalla de inicio»','Tria «Afegeix a la pantalla d’inici»')+'</small>':'<b>'+T('Instala la Pizarra','Instal·la la Pissarra')+'</b><small>'+T('Entra directamente desde la pantalla de inicio, como una app.','Entra directament des de la pantalla d’inici, com una app.')+'</small>';
+b.innerHTML=(src?'<img alt="" src="'+src+'">':'')+'<div style="flex:1">'+body+'</div>'+(kind==='and'?'<button class="ib" id="instgo">'+T('Instalar','Instal·lar')+'</button>':'')+'<button class="ix" id="instx" aria-label="'+T('Cerrar','Tancar')+'">✕</button>';
+b.style.display='flex';document.getElementById('instx').onclick=function(){close(14)};
+var g=document.getElementById('instgo');if(g)g.onclick=function(){if(!DEF)return;DEF.prompt();DEF.userChoice.then(function(r){DEF=null;close(r&&r.outcome==='accepted'?3650:14)}).catch(function(){})}}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();DEF=e;show('and')});
+window.addEventListener('appinstalled',function(){close(3650)});
+if(ios&&safari&&!standalone()){window.addEventListener('load',function(){setTimeout(function(){show('ios')},1500)})}
+window.__instTest=function(k){try{localStorage.removeItem(KEY)}catch(e){}show(k)}})();</script></body>
 </html>
