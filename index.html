@@ -1565,8 +1565,8 @@ function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\;')
 function icsFold(l){const o=[];while(l.length>73){o.push(l.slice(0,73));l=' '+l.slice(73)}o.push(l);return o.join('\r\n')}
 function icsDT(d,t,add){const x=new Date(d+'T'+(t||'00:00')+':00');if(add)x.setMinutes(x.getMinutes()+add);return x.getFullYear()+p2(x.getMonth()+1)+p2(x.getDate())+'T'+p2(x.getHours())+p2(x.getMinutes())+'00'}
 function avIcs(){const a=S.av;if(!a)return null;let d,t,end,sum,loc,desc;const cat=(TEAM&&TEAM.cat)||'';
-if(a.k==='m'){const m=MT.find(x=>x.id===a.id);if(!m)return null;d=m.date;t=m.ctime||m.time;if(!t)return 'time';end=m.ctime?150:120;sum=T2('Partido','Partit')+' '+cat+': '+(m.home?cat+' – '+m.rival:m.rival+' – '+cat);loc=m.ctime&&m.cplace?m.cplace:m.place;desc=(m.time?T2('Partido','Partit')+': '+m.time:'')+(m.ctime?(m.time?'\n':'')+T2('Concentración','Concentració')+': '+m.ctime:'')}
-else{d=a.d;t=a.t;if(!t)return 'time';end=90;sum=T2('Entrenamiento','Entrenament')+' '+cat;loc=a.p;desc=a.n}
+if(a.k==='m'){const m=MT.find(x=>x.id===a.id);if(!m)return null;d=m.date;t=m.ctime||m.time;if(!t)return 'time';end=m.ctime?150:120;{const ck=(TEAM&&TEAM.club)||cat;sum='🏀 '+cat+': '+(m.home?ck+' – '+m.rival:m.rival+' – '+ck).replace(/ /g,'\u00A0')}loc=m.place||m.cplace||'';desc=avText(a).replace(/\n\n(?:Convocados|Convocats):\n(?:\d+\. .*(?:\n|$))+/,'\n').replace(/\n{3,}/g,'\n\n').trim()}
+else{d=a.d;t=a.t;if(!t)return 'time';end=90;sum='🏀 '+T2('Entrenamiento','Entrenament')+' '+cat;loc=a.p;desc=a.n}
 const u='pissarra-'+a.id+'-'+d+'@pissarrabasket';const st=new Date(),dst=st.getUTCFullYear()+p2(st.getUTCMonth()+1)+p2(st.getUTCDate())+'T'+p2(st.getUTCHours())+p2(st.getUTCMinutes())+p2(st.getUTCSeconds())+'Z';
 const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pissarra de basquet//CA','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+u,'DTSTAMP:'+dst,'DTSTART:'+icsDT(d,t),'DTEND:'+icsDT(d,t,end),'SUMMARY:'+icsEsc(sum)];
 if(loc)L.push('LOCATION:'+icsEsc(loc));if(desc)L.push('DESCRIPTION:'+icsEsc(desc));
@@ -2122,7 +2122,7 @@ document.addEventListener('pointerup',pend);document.addEventListener('pointerca
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.target.dataset&&ev.target.dataset.lf!==undefined){const bt=document.querySelector('[data-act=login],[data-act=unlock],[data-act=confirm],[data-act=resetreq],[data-act=resetpw]');if(bt){ev.preventDefault();document.querySelectorAll('[data-lf]').forEach(x=>{S.lf[x.dataset.lf]=x.value});bt.click()}return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-22-esc3';
+const APPBUILD='2026-11-22-esc5';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
