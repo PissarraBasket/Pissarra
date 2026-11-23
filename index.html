@@ -386,6 +386,9 @@ details>summary.hd2s::after{content:'▾';float:right;color:var(--muted)}details
 .pm{font-size:.72rem;border-radius:20px;padding:2px 9px}.pm.v{background:#eee;color:#555}.pm.e{background:#e3f4e8;color:#1d6b34}
 .emp2{color:var(--muted);font-size:.9rem;margin:6px 2px}.add2{width:100%;border:2px dashed #c9c2b8;border-radius:12px;padding:12px;background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}
 .addo2{border:2px dashed #ff5a14;border-radius:12px;padding:12px}.dis2{border:2px dashed #ddd;border-radius:12px;padding:12px;text-align:center;color:#888;background:rgba(128,128,128,.08);font-size:.88rem}
+.phd{display:flex;align-items:center;gap:8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 2px 6px}.pcnt{font-size:.75rem;text-transform:none;letter-spacing:0;background:#fff3cf;color:#8a5a00;border:1px solid #f0c96a;border-radius:20px;padding:2px 9px}
+.item.pend{background:#fff8e6;border-color:#f0c96a;border-left:5px solid #e8a317;color:#2b2012}.item.pend small{color:#6b4a10}.item.pend .btn.sec{background:#fff;color:#2b2012}
+.pbad{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;border-radius:20px;padding:3px 10px;background:#e8a317;color:#fff;text-transform:uppercase;letter-spacing:.03em;margin-top:3px}
 </style>
 </head>
 <body>
@@ -805,7 +808,7 @@ function vClub00(){if(!CLUB)return '<p class="empty">Cargando…</p>';
 const f=S.pf,ppl=CLUB.people||[],byU={};SESS.forEach(x=>{(byU[x.uid]=byU[x.uid]||[]).push(x)});
 const rn=r=>r==='coord'?'Coordinador':'Entrenador';
 const G=genUid(),amG=G===UID;
-const people=ppl.map(p=>{const me=p.uid===UID,isg=!!p.uid&&p.uid===G,co=p.role==='coord';
+const sortedP=[...ppl].sort((a,b)=>(!!a.uid)-(!!b.uid)),npend=sortedP.filter(p=>!p.uid).length,people=sortedP.map((p,ix)=>{const pend=!p.uid;const hd=npend?(ix===0?`<div class="phd">${T2('Pendientes de registro','Pendents de registre')}<span class="pcnt">${npend} ${npend===1?T2('pendiente','pendent'):T2('pendientes','pendents')}</span></div>`:(ix===npend?`<div class="phd">${T2('Activos','Actius')}</div>`:'')):'';const me=p.uid===UID,isg=!!p.uid&&p.uid===G,co=p.role==='coord';
 const tag=isg?'<span class="tag c">Coordinador general</span>':co?'<span class="tag c">Coordinador</span>':'<span class="tag">Entrenador</span>';
 const quit=S.pdel===p.email?`<button class="btn sm" data-act="premok" data-e="${esc(p.email)}">Sí, quitar</button><button class="btn sec sm" data-act="prno">Cancelar</button>`:`<button class="btn sec sm" data-act="prem" data-e="${esc(p.email)}">Quitar</button>`;
 let acts='';
@@ -813,7 +816,7 @@ if(me){acts=amG?'<button class="btn sec sm" data-act="gxopen">Traspasar cargo…
 else if(isg){acts=''}
 else if(co){const rs=p.uid?'':`<button class="btn sec sm" data-act="pmail" data-e="${esc(p.email)}">${T2('Reenviar correo','Reenviar correu')}</button>`;acts=amG?(p.uid?`<button class="btn sec sm" data-act="rcdem" data-u="${esc(p.uid)}">${T2('Pasar a entrenador','Passar a entrenador')}</button><button class="btn sec sm" data-act="rcopen" data-u="${esc(p.uid)}">${T2('Sacar del club…','Treure del club…')}</button>`:rs+quit):''}
 else{acts=(amG?`<button class="btn sec sm" data-act="mkcoord" data-e="${esc(p.email)}">Hacer coordinador</button>`:'')+(p.uid?'':`<button class="btn sec sm" data-act="pmail" data-e="${esc(p.email)}">${T2('Reenviar correo','Reenviar correu')}</button>`)+quit}
-return `<div class="item"><div><div class="nm"><b>${esc(p.name||p.email)}</b>${me?'<span class="tag">Tú</span>':''}${tag}</div><small>${p.name?esc(p.email)+' · ':''}${p.uid?'Activo':'Pendiente de registro'}</small></div><div class="ctrl noprint">${acts}</div></div>`}).join('');
+return hd+`<div class="item${pend?' pend':''}"><div><div class="nm"><b>${esc(p.name||p.email)}</b>${me?'<span class="tag">Tú</span>':''}${tag}</div><small>${pend?`<span class="pbad">⏳ ${T2('Pendiente de registro','Pendent de registre')}</span>`:esc(p.email)+' · '+T2('Activo','Actiu')}</small></div><div class="ctrl noprint">${acts}</div></div>`}).join('');
 const coaches=ppl.filter(p=>p.uid&&p.uid!==UID);
 const rtag=p=>p.uid&&p.uid===G?'<span class="tag c">Coordinador general</span>':p.role==='coord'?'<span class="tag c">Coordinador</span>':'<span class="tag">Entrenador</span>';
 let det='',detId='';if(S.sel){const doc=SESS.find(x=>x.id===S.sel.d),s=doc&&(doc.saved||[]).find(x=>x.sid===S.sel.sid);
@@ -2288,7 +2291,7 @@ document.addEventListener('pointerup',pend);document.addEventListener('pointerca
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.target.dataset&&ev.target.dataset.lf!==undefined){const bt=document.querySelector('[data-act=login],[data-act=unlock],[data-act=confirm],[data-act=resetreq],[data-act=resetpw]');if(bt){ev.preventDefault();document.querySelectorAll('[data-lf]').forEach(x=>{S.lf[x.dataset.lf]=x.value});bt.click()}return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-23-esc17';
+const APPBUILD='2026-11-23-esc18';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
