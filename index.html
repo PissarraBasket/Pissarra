@@ -389,6 +389,7 @@ details>summary.hd2s::after{content:'▾';float:right;color:var(--muted)}details
 .phd{display:flex;align-items:center;gap:8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 2px 6px}.pcnt{font-size:.75rem;text-transform:none;letter-spacing:0;background:#fff3cf;color:#8a5a00;border:1px solid #f0c96a;border-radius:20px;padding:2px 9px}
 .item.pend{background:#fff8e6;border-color:#f0c96a;border-left:5px solid #e8a317;color:#2b2012}.item.pend small{color:#6b4a10}.item.pend .btn.sec{background:#fff;color:#2b2012}
 .pbad{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;border-radius:20px;padding:3px 10px;background:#e8a317;color:#fff;text-transform:uppercase;letter-spacing:.03em;margin-top:3px}
+@media(min-width:900px){#ed[data-f="1"]{max-width:560px!important;max-height:none}}
 </style>
 </head>
 <body>
@@ -1352,7 +1353,7 @@ const e=ED.sel!==null?ED.els[ED.sel]:null;let sel='';
 if(e){if('x1' in e){const m=lmid(e);sel=[1,2].map(h=>`<circle data-h="${h}" cx="${e['x'+h]}" cy="${e['y'+h]}" r="9" fill="var(--accent)" stroke="#fff" stroke-width="2"/>`).join('')+`<circle data-h="c" cx="${m[0]}" cy="${m[1]}" r="8" fill="#fff" stroke="var(--accent)" stroke-width="3" style="cursor:crosshair"/>`}
 else{const z=e.z||1,b=e.t==='text'?tbox(e):[50*z,50*z],w=b[0],h=b[1];
 sel=`<g transform="translate(${e.x},${e.y}) rotate(${e.r||0})"><rect x="${-w/2}" y="${-h/2}" width="${w}" height="${h}" rx="6" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/><path d="M0 ${-h/2}V${-h/2-26}" stroke="var(--accent)" stroke-width="2" pointer-events="none"/><circle data-h="r" cx="0" cy="${-h/2-26}" r="10" fill="var(--accent)" stroke="#fff" stroke-width="2" style="cursor:grab"/><rect data-h="s" x="${w/2-8}" y="${h/2-8}" width="16" height="16" rx="3" fill="var(--accent)" stroke="#fff" stroke-width="2" style="cursor:nwse-resize"/></g>`}}
-return court(ED.full)+els+tmp+sel}
+return court(ED.full)+els+tmp+sel+((ED.snap&&(ED.drag||LINES.includes(ED.tool)))?`<circle cx="${ED.snap.x}" cy="${ED.snap.y}" r="${ED.snap.r}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="5 4" pointer-events="none"/>`:'')}
 function renderEd(){const s=$('#ed');if(s)s.innerHTML=edInner()}
 Object.defineProperty(ED,'els',{get(){return this.steps[this.si].els},set(v){this.steps[this.si].els=v},enumerable:false});
 const dgSteps=d=>d&&d.steps&&d.steps.length?d.steps:[{els:(d&&d.els)||[],txt:(d&&d.txt)||''}];
@@ -1801,8 +1802,8 @@ const tools=`<section class="panel edtools"><h3>Esquema</h3>
 ${isPt?`<label style="margin-top:8px">Rotación (${se.r||0}°)<input type="range" min="0" max="359" step="5" data-ed="r" value="${se.r||0}"></label>`:''}${se&&!isPt?`<p style="margin:8px 0 0;color:var(--muted);font-size:.9rem">Para curvar la línea, arrastra el círculo blanco del centro.</p>${se.cx!==undefined?'<p style="margin:6px 0 0"><button class="btn sec sm" data-act="dstraight">Enderezar la línea</button></p>':''}`:''}
 <p class="ctrl" style="margin-top:14px"><button class="btn sec sm" data-act="dundo">Deshacer</button><button class="btn sec sm" data-act="ddel">Borrar selección</button><button class="btn sec sm" data-act="dclear">Limpiar todo</button></p></section>`;
 return `<section class="panel"><h2>${S.edit!==null?'Editar ejercicio':'Crear ejercicio'}</h2>${form}</section>
-${stepBar()}<div class="edwrap" style="margin-top:10px">${tools}<div class="edcanvas"><div class="tools ico" role="toolbar" aria-label="Símbolos">${TOOLS.map(([k,l])=>`<button class="tool" data-act="tool" data-t="${k}" title="${esc(l)}" aria-label="${esc(l)}" aria-pressed="${ED.tool===k}"><svg viewBox="0 0 60 34" aria-hidden="true">${icon(k)}</svg></button>`).join('')}</div><svg id="ed" viewBox="0 0 500 ${ED.full?916:468}" style="max-width:${ED.full?'380px':'640px'}" aria-label="Pizarra del esquema">${edInner()}</svg>
-<p style="color:var(--muted);font-size:.9rem">Elige un símbolo y haz clic en la pista; las líneas se arrastran de inicio a fin. Con «Seleccionar» pulsa un símbolo para moverlo: el círculo de arriba lo gira (360°) y el cuadrado de la esquina lo agranda o lo reduce. El esquema es opcional.</p></div></div>
+${stepBar()}<div class="edwrap" style="margin-top:10px">${tools}<div class="edcanvas"><div class="tools ico" role="toolbar" aria-label="Símbolos">${TOOLS.map(([k,l])=>`<button class="tool" data-act="tool" data-t="${k}" title="${esc(l)}" aria-label="${esc(l)}" aria-pressed="${ED.tool===k}"><svg viewBox="0 0 60 34" aria-hidden="true">${icon(k)}</svg></button>`).join('')}</div><svg id="ed" ${ED.full?'data-f="1"':''} viewBox="0 0 500 ${ED.full?916:468}" style="max-width:${ED.full?'380px':'640px'}" aria-label="Pizarra del esquema">${edInner()}</svg>
+<p style="color:var(--muted);font-size:.9rem">Elige un símbolo y haz clic en la pista; las líneas se arrastran de inicio a fin. Con «Seleccionar» pulsa un símbolo para moverlo: el círculo de arriba lo gira (360°) y el cuadrado de la esquina lo agranda o lo reduce. El esquema es opcional.</p><p style="color:var(--muted);font-size:.85rem;margin-top:4px">${T2('Precisión: las líneas se enganchan a los jugadores; con Mayús salen rectas (0°/45°/90°), con Alt no se engancha. Con un símbolo seleccionado, las flechas del teclado lo mueven (con Mayús, más).','Precisió: les línies s\'enganxen als jugadors; amb Majúscules surten rectes (0°/45°/90°), amb Alt no s\'enganxa. Amb un símbol seleccionat, les fletxes del teclat el mouen (amb Majúscules, més).')}</p></div></div>
 ${stepTxt()}<p style="margin:16px 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="esave">${copy?'Guardar como copia':'Guardar en la base de datos'}</button>${S.edit!==null?'<button class="btn sec" data-act="enew">Cancelar</button>':''}</p>
 <h2 style="margin:24px 0 12px">Mis ejercicios (${mine.length})</h2>
 <div class="grid">${mine.map(e=>card(e)).join('')||'<p class="empty">Todavía no has creado ningún ejercicio. Los que crees entran en la base de datos: salen en la biblioteca, en el selector de la sesión y el generador automático los tiene en cuenta.</p>'}</div>`}
@@ -2266,32 +2267,43 @@ else if(t.dataset.f){S[t.dataset.f]=t.value;render()}
 else if(t.dataset.p){S.plan[t.dataset.p]=t.type==='number'||t.dataset.p==='age'?+t.value:t.value;render()}
 else if(t.dataset.m!==undefined){S.plan.items[+t.dataset.m].min=Math.max(1,+t.value||1);render()}});
 let qT=null;document.addEventListener('input',ev=>{if(ev.target.dataset.f==='q'){S.q=ev.target.value;clearTimeout(qT);qT=setTimeout(()=>{const a=document.querySelector('[data-f=q]'),pos=a?a.selectionStart:0;render();const q=document.querySelector('[data-f=q]');if(q){q.focus();q.setSelectionRange(pos,pos)}},140)}});
+const SNAPR=26;
+function snapEnd(p,from,ev,skip){ED.snap=null;
+if(ev.shiftKey&&from){const dx=p.x-from.x,dy=p.y-from.y,L=Math.hypot(dx,dy),a=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*Math.PI/4;return{x:Math.round(from.x+Math.cos(a)*L),y:Math.round(from.y+Math.sin(a)*L)}}
+if(ev.altKey)return p;
+let best=null,bd=1e9;
+ED.els.forEach((e,i)=>{if(i===skip||'x1' in e||e.t==='text'||e.x==null)return;const d=Math.hypot(p.x-e.x,p.y-e.y);if(d<SNAPR*(e.z||1)&&d<bd){best=e;bd=d}});
+if(!best)return p;
+const ref=from||p;let dx=ref.x-best.x,dy=ref.y-best.y,L=Math.hypot(dx,dy);if(L<1){dx=0;dy=-1;L=1}
+const r=20*(best.z||1);ED.snap={x:best.x,y:best.y,r:r+8};
+return{x:Math.round(best.x+dx/L*r),y:Math.round(best.y+dy/L*r)}}
 const ptr=ev=>{const s=$('#ed'),r=s.getBoundingClientRect(),vb=s.viewBox.baseVal;return{x:Math.round((ev.clientX-r.left)/r.width*vb.width),y:Math.round((ev.clientY-r.top)/r.height*vb.height)}};
 document.addEventListener('pointerdown',ev=>{if(!(ev.target.closest&&ev.target.closest('#ed')))return;const ae=document.activeElement;if(ae&&ae.blur&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))ae.blur();const s=$('#ed');ev.preventDefault();const p=ptr(ev),t=ED.tool;try{s.setPointerCapture(ev.pointerId)}catch(e){}
 if(t==='sel'){const h=ev.target.closest('[data-h]'),g=ev.target.closest('[data-i]');
 if(h&&ED.sel!==null)ED.drag={k:'h',h:h.dataset.h};
 else if(g){ED.sel=+g.dataset.i;ED.drag={k:'m',x:p.x,y:p.y}}
 else ED.sel=null}
-else if(LINES.includes(t))ED.drag={k:'n',t,x1:p.x,y1:p.y,x2:p.x,y2:p.y};
+else if(LINES.includes(t)){const q=snapEnd(p,null,ev,-1);ED.drag={k:'n',t,x1:q.x,y1:q.y,x2:q.x,y2:q.y}}
 else{const e={t,x:p.x,y:p.y,c:ED.col,z:ED.z};if((t==='of'||t==='df')&&ED.pn)e.n=ED.els.filter(z=>z.t===t).length+1;if(t==='orig')e.n=ED.num++;if(t==='text')e.s=ED.txt||'Texto';ED.els.push(e);ED.sel=null;ED.drag={k:'p'}}
 renderEd()});
-document.addEventListener('pointermove',ev=>{const d=ED.drag;if(!d||!$('#ed'))return;const p=ptr(ev);
-if(d.k==='n'){d.x2=p.x;d.y2=p.y}
+document.addEventListener('pointermove',ev=>{const d=ED.drag;if(!$('#ed'))return;if(!d){const inEd=ev.target&&ev.target.closest&&ev.target.closest('#ed'),was=JSON.stringify(ED.snap||null);if(inEd&&LINES.includes(ED.tool))snapEnd(ptr(ev),null,{},-1);else ED.snap=null;if(was!==JSON.stringify(ED.snap||null))renderEd();return}const p=ptr(ev);
+if(d.k==='n'){const q=snapEnd(p,{x:d.x1,y:d.y1},ev,-1);d.x2=q.x;d.y2=q.y}
 else if(d.k==='m'){const e=ED.els[ED.sel],dx=p.x-d.x,dy=p.y-d.y;d.x=p.x;d.y=p.y;for(const k of ['x','x1','x2','cx'])if(k in e)e[k]+=dx;for(const k of ['y','y1','y2','cy'])if(k in e)e[k]+=dy}
 else if(d.k==='h'){const e=ED.els[ED.sel];
 if(d.h==='r'){let a=(Math.atan2(p.y-e.y,p.x-e.x)*180/Math.PI+450)%360;const q=Math.round(a/15)*15;if(Math.abs(a-q)<5)a=q;e.r=Math.round(a)%360}
 else if(d.h==='s'){const b=e.t==='text'?tbox(e,1):[50,50];e.z=Math.min(4,Math.max(.4,Math.round(Math.hypot(p.x-e.x,p.y-e.y)/Math.hypot(b[0]/2,b[1]/2)*20)/20))}
 else if(d.h==='c'){const mx=(e.x1+e.x2)/2,my=(e.y1+e.y2)/2;if(Math.hypot(p.x-mx,p.y-my)<8){delete e.cx;delete e.cy}else{e.cx=p.x;e.cy=p.y}}
-else{e['x'+d.h]=p.x;e['y'+d.h]=p.y}}
+else{const o=d.h==='1'?'2':'1',q=snapEnd(p,{x:e['x'+o],y:e['y'+o]},ev,ED.sel);e['x'+d.h]=q.x;e['y'+d.h]=q.y}}
 renderEd()});
-const pend=()=>{const d=ED.drag;if(!d)return;ED.drag=null;
+const pend=()=>{const d=ED.drag;if(!d)return;ED.drag=null;ED.snap=null;
 if(d.k==='n'&&Math.hypot(d.x2-d.x1,d.y2-d.y1)>14){const e={t:d.t,x1:d.x1,y1:d.y1,x2:d.x2,y2:d.y2,c:ED.col,z:ED.z};if(NUMD.includes(d.t))e.n=ED.num++;ED.els.push(e)}
 render()};
 document.addEventListener('pointerup',pend);document.addEventListener('pointercancel',pend);
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.target.dataset&&ev.target.dataset.lf!==undefined){const bt=document.querySelector('[data-act=login],[data-act=unlock],[data-act=confirm],[data-act=resetreq],[data-act=resetpw]');if(bt){ev.preventDefault();document.querySelectorAll('[data-lf]').forEach(x=>{S.lf[x.dataset.lf]=x.value});bt.click()}return}
+if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&/^Arrow(Left|Right|Up|Down)$/.test(ev.key)&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();const st=ev.shiftKey?5:1,dx=ev.key==='ArrowLeft'?-st:ev.key==='ArrowRight'?st:0,dy=ev.key==='ArrowUp'?-st:ev.key==='ArrowDown'?st:0,e=ED.els[ED.sel];for(const k of ['x','x1','x2','cx'])if(k in e)e[k]+=dx;for(const k of ['y','y1','y2','cy'])if(k in e)e[k]+=dy;renderEd();return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-23-esc18';
+const APPBUILD='2026-11-23-esc19';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
