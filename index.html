@@ -623,6 +623,9 @@ const P=k=>'data/users/'+CUID+'/'+(AID?'a/'+AID+'/':'')+k;
 const isMine=e=>ADMIN?true:e.by==='base'?false:e.by?(e.by==='local'||e.by===UID):true;
 const nameOf=id=>NAMES[id]||'';
 const newId=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+const uniqId=()=>{const u=new Set(E.map(e=>e.id));let i=newId();while(u.has(i))i++;return i};
+/* Si dos exercicis propis tenen el mateix identificador (importacions antigues), el segon en rep un de nou */
+function fixDupIds(){const seen=new Set();let n=0;E.forEach(e=>{if(!seen.has(e.id)){seen.add(e.id);return}if(e.custom&&e.by===UID){let i=newId();while(seen.has(i))i++;e.id=i;seen.add(i);n++}});if(n){rebuildDG();setTimeout(()=>{try{persist()}catch(x){}},4000)}return n}
 function rebuildDG(){for(const k in DG)if(+k>=BN)delete DG[k];E.forEach(e=>{if(e.dg)DG[e.id]=e.dg})}
 function fail(e){if(FAILED++<2)toast(e&&e.code==='invalid_argument'?'No tienes permiso para guardar. Pide al propietario acceso de colaborador.':'No se ha podido guardar. Revisa tu conexión.')}
 const ALLT=()=>[...TEAMS,...STEAMS];
@@ -684,7 +687,7 @@ async function enter(){ONLINE=true;E.length=BN;
 const [td,,meEx,bd0]=await Promise.all([DB.doc(P('teams')).get(),loadShares(),DB.doc('exercises/'+UID).get(),DB.doc('exercises/base').get().catch(()=>null)]),tx=td.exists?cl(td.data()):{};TEAMS=tx.teams||[];TEAM=ALLT().find(t=>t.id===tx.active)||TEAMS[0]||STEAMS[0]||null;
 await loadTeamOnline();
 try{const bd=bd0;if(bd&&bd.exists){const bx=cl(bd.data());(bx.list||[]).forEach(e=>E.push({...e,by:'base',custom:true}));BASELOADED=true}}catch(e){}
-const me=meEx;if(me.exists){const x=cl(me.data());Object.assign(CATS,x.cats||{});(x.list||[]).forEach(e=>E.push({...e,by:UID,custom:true}))}
+const me=meEx;if(me.exists){const x=cl(me.data());Object.assign(CATS,x.cats||{});(x.list||[]).forEach(e=>E.push({...e,by:UID,custom:true}));fixDupIds()}
 rebuildDG();S.tf=tfFor(TEAM);S.tnew=!TEAM;S.tab=ADMIN?'admin':(!TEAM&&isCoord()?'club':'guia');
 if(UNEX)UNEX();UNEX=DB.collection('exercises').onSnapshot(onEx,()=>{});
 resub();checkInv();PFC={};
@@ -2247,7 +2250,7 @@ else if(a==='impcancel'){S.imp=null;render()}
 else if(a==='impview'){S.imp=null;S.xf='p';S.tab='lib';render();window.scrollTo(0,0)}
 else if(a==='impgo'){if(!ADMIN||!S.imp)return;let n=0;const used=new Set(E.map(e=>impNorm(e.n)));
 S.imp.items.forEach(x=>{if(!x.sel||x.err.length)return;let nm=x.n,k=2;while(used.has(impNorm(nm)))nm=x.n+' ('+(k++)+')';used.add(impNorm(nm));
-const o={n:nm,c:x.cs[0],x:x.cs.slice(1),a:x.a,m:x.m,j:x.j||'Todos',mat:x.mat||'Ninguno',d:x.d||'Consulta el esquema.',v:x.v||'—',custom:true,by:ONLINE?UID:'local',id:ONLINE?newId()+n:nextId()};if(x.dg)o.dg=x.dg;E.push(o);n++});
+const o={n:nm,c:x.cs[0],x:x.cs.slice(1),a:x.a,m:x.m,j:x.j||'Todos',mat:x.mat||'Ninguno',d:x.d||'Consulta el esquema.',v:x.v||'—',custom:true,by:ONLINE?UID:'local',id:ONLINE?uniqId():nextId()};if(x.dg)o.dg=x.dg;E.push(o);n++});
 if(!n){toast('No hay ejercicios para importar');return}rebuildDG();persist();S.imp={done:n};render();toast('Ejercicios importados')}
 else if(a==='edstep'){ED.si=Math.min(+b.dataset.i,ED.steps.length-1);ED.sel=null;render()}
 else if(a==='edstepadd'){if(ED.steps.length<6){ED.steps.push({els:[],txt:''});ED.si=ED.steps.length-1;ED.sel=null;ED.num=1;render()}}
@@ -2406,7 +2409,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.targ
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&/^Arrow(Left|Right|Up|Down)$/.test(ev.key)&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();const st=ev.shiftKey?5:1,dx=ev.key==='ArrowLeft'?-st:ev.key==='ArrowRight'?st:0,dy=ev.key==='ArrowUp'?-st:ev.key==='ArrowDown'?st:0,e=ED.els[ED.sel];for(const k of ['x','x1','x2','cx'])if(k in e)e[k]+=dx;for(const k of ['y','y1','y2','cy'])if(k in e)e[k]+=dy;renderEd();return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-25-esc27';
+const APPBUILD='2026-11-25-esc28';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
