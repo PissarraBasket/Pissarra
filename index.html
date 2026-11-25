@@ -2392,7 +2392,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.targ
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&/^Arrow(Left|Right|Up|Down)$/.test(ev.key)&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();const st=ev.shiftKey?5:1,dx=ev.key==='ArrowLeft'?-st:ev.key==='ArrowRight'?st:0,dy=ev.key==='ArrowUp'?-st:ev.key==='ArrowDown'?st:0,e=ED.els[ED.sel];for(const k of ['x','x1','x2','cx'])if(k in e)e[k]+=dx;for(const k of ['y','y1','y2','cy'])if(k in e)e[k]+=dy;renderEd();return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-25-esc24';
+const APPBUILD='2026-11-25-esc25';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
