@@ -1042,7 +1042,7 @@ function card(e){return `<article class="ex"><h3>${esc(e.n)}</h3>
 <p>${esc(e.d)}</p><p class="prog"><b>Progresión:</b> ${esc(e.v)}</p><p class="prog"><b>Material:</b> ${esc(e.mat)}</p>
 ${DG[e.id]?`<div class="dg">${dgAll(DG[e.id])}</div>`:''}<div class="ctrl" style="margin-top:auto"><button class="btn" data-act="add" data-id="${e.id}">Añadir a la sesión</button>${e.custom?`<button class="btn sec" data-act="eopen" data-id="${e.id}">${isMine(e)?'Editar ejercicio':'Editar (crea una copia)'}</button>`:''}${e.custom&&isMine(e)?`<button class="btn sec" data-act="cdel" data-id="${e.id}" aria-label="Borrar ejercicio">Borrar</button>`:''}</div></article>`}
 
-function areas(g){return (g&&g.ks)||[...MAIN,...Object.keys(CATS).filter(k=>k.startsWith('c_'))]}
+function areas(g){return (g&&g.ks)||[...MAIN]}
 function vGuia(){if(!GUIDE[S.age])S.age=gk(+S.age||10);const g=GUIDE[S.age],ks=areas(g),w=k=>g.w[k]||4,ed=!!S.gedit,free=Object.keys(CATS).filter(k=>k!=='cal'&&k!=='vuelta'&&!ks.includes(k));
 const list=(l,title)=>`<div><h3>${title}</h3>${ed?`${g[l].map((x,i)=>`<div class="ctrl" style="margin:6px 0"><input data-gu="${l}:${i}" value="${esc(x)}" style="flex:1 1 200px" aria-label="${title} ${i+1}"><button class="btn sec sm" data-act="gld" data-l="${l}" data-i="${i}" aria-label="Quitar">✕</button></div>`).join('')}<button class="btn sec sm" data-act="gla" data-l="${l}">＋ Añadir</button>`:`<ul>${g[l].filter(x=>x.trim()).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}</div>`;
 return `<section class="panel"><h2>${ageLabel(S.age)}: Aspectos a trabajar</h2>
@@ -1104,7 +1104,7 @@ ${p.items.map((it,i)=>{const e=ex(it.id);return `<div class="item${it.o==='n'?' 
 <p class="noprint" style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="gen">Generar sesión automática</button><button class="btn" data-act="save">${S.edi?'Guardar cambios':'Guardar sesión'}</button>${S.edi?'<button class="btn sec" data-act="sedcancel">Cancelar edición</button>':''}<button class="btn sec" data-act="pdf">Descargar PDF</button><button class="btn sec" data-act="clear">Vaciar</button></p></section>`}
 
 function dobj(e){return OBJ[cats(e).find(k=>OBJ[k])]||'Conseguir el objetivo del ejercicio.'}
-function planGoals(p){const g=p.goals||[],fo=p.focus||[],ks=[...MAIN,...Object.keys(CATS).filter(k=>k.startsWith('c_'))];
+function planGoals(p){const g=p.goals||[],fo=p.focus||[],ks=areas(GUIDE[gk(+p.age||10)]);
 return `<div class="noprint" style="margin:6px 0 14px"><b style="font-size:.88rem;color:var(--muted)">Énfasis para la sesión automática</b>
 <div class="ctrl" style="margin:6px 0">${ks.map(k=>`<button class="pill" aria-pressed="${fo.includes(k)}" data-act="focus" data-k="${k}">${esc(CATS[k])}</button>`).join('')}</div>
 <p style="margin:0;color:var(--muted);font-size:.88rem">Las áreas marcadas tendrán más tiempo la próxima vez que generes una sesión.</p></div>
@@ -2417,7 +2417,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.targ
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&/^Arrow(Left|Right|Up|Down)$/.test(ev.key)&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();const st=ev.shiftKey?5:1,dx=ev.key==='ArrowLeft'?-st:ev.key==='ArrowRight'?st:0,dy=ev.key==='ArrowUp'?-st:ev.key==='ArrowDown'?st:0,e=ED.els[ED.sel];for(const k of ['x','x1','x2','cx'])if(k in e)e[k]+=dx;for(const k of ['y','y1','y2','cy'])if(k in e)e[k]+=dy;renderEd();return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-28-esc34';
+const APPBUILD='2026-11-28-esc35';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD)blockApp(sb)}).catch(function(){})}
 render();boot();verCheck();
 </script>
