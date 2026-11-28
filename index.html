@@ -627,7 +627,7 @@ const uniqId=()=>{const u=new Set(E.map(e=>e.id));let i=newId();while(u.has(i))i
 /* Si dos exercicis propis tenen el mateix identificador (importacions antigues), el segon en rep un de nou */
 function fixDupIds(){const seen=new Set();let n=0;E.forEach(e=>{if(!seen.has(e.id)){seen.add(e.id);return}if(e.custom&&e.by===UID){let i=newId();while(seen.has(i))i++;e.id=i;seen.add(i);n++}});if(n){rebuildDG();setTimeout(()=>{try{persist()}catch(x){}},4000)}return n}
 function rebuildDG(){for(const k in DG)if(+k>=BN)delete DG[k];E.forEach(e=>{if(e.dg)DG[e.id]=e.dg})}
-function fail(e){if(FAILED++<2)toast(e&&e.code==='invalid_argument'?'No tienes permiso para guardar. Pide al propietario acceso de colaborador.':'No se ha podido guardar. Revisa tu conexión.')}
+function fail(e){if(e&&e.code==='stale'){toast(T2('Los datos de este equipo han cambiado desde otro dispositivo. Los he recargado para no perder nada.','Les dades d’aquest equip han canviat des d’un altre dispositiu. Les he recarregat per no perdre res.'));if(!S.tnl&&TEAM)loadTeamOnline().then(()=>safeRender()).catch(()=>{});return}if(FAILED++<2)toast(e&&e.code==='invalid_argument'?'No tienes permiso para guardar. Pide al propietario acceso de colaborador.':'No se ha podido guardar. Revisa tu conexión.')}
 const ALLT=()=>[...TEAMS,...STEAMS];
 const ROW=()=>!!(TEAM&&((TEAM.shared&&TEAM.perm!=='edit')||TEAM.fin||seasonLocked(TEAM)));
 const ROTABS=['guia','lib','plan','saved','new','week','att','mt','ed','team'];
@@ -647,9 +647,9 @@ if(miss.length){mine.list=mine.list.concat(miss);miss.forEach(e=>{if(!E.some(x=>
 await DB.doc(p).set(mine)}
 function persist(){if(window.__bye)return;if(!ONLINE){localPersist();return}if(S.loading)return;
 const w={};w[P('profile')]=PROFILE;w[P('teams')]={teams:TEAMS,active:TEAM?TEAM.id:''};
-let tdp=null;if(TEAM&&!TEAM.shared){tdp=P('t_'+TEAM.id);w[tdp]={saved,draft:S.plan,guide:GS,players:PL,matches:MT,plays:PY,vc:VC,tr:TRN,hor:HOR,hpub:HPUB?1:0,hcx:HCX}}
+let tdp=null;if(S.tnl){}else if(TEAM&&!TEAM.shared){tdp=P('t_'+TEAM.id);w[tdp]={saved,draft:S.plan,guide:GS,players:PL,matches:MT,plays:PY,vc:VC,tr:TRN,hor:HOR,hpub:HPUB?1:0,hcx:HCX}}
 else if(TEAM&&TEAM.shared){if(!ROW()){tdp=TP();w[tdp]={saved,draft:S.rd||{},guide:GS,players:PL,matches:MT,plays:PY,vc:VC,tr:TRN,hor:HOR,hpub:HPUB?1:0,hcx:HCX}}w[P('sd_'+TEAM.id)]={draft:S.plan}}
-if(TEAM&&inClub()&&!TEAM.ind&&(!TEAM.shared||!ROW()))w['sessions/'+(TEAM.shared?TEAM.owner:UID)+'_'+TEAM.id]=mirror();
+if(!S.tnl&&TEAM&&inClub()&&!TEAM.ind&&(!TEAM.shared||!ROW()))w['sessions/'+(TEAM.shared?TEAM.owner:UID)+'_'+TEAM.id]=mirror();
 TEAMS.forEach(t=>{if(t.collab&&(inClub()||!t.collab.length))w['shares/'+UID+'_'+t.id]=shareDoc(t)});
 if(ADMIN)Object.keys(EXOWN).forEach(o=>{if(o==='base'||o===UID)return;w['exercises/'+o]={ownerName:NAMES[o]||'',list:E.filter(e=>e.by===o),cats:EXCATS[o]||{}}});
 if(ADMIN&&BASELOADED)w['exercises/base']={ownerName:'Biblioteca base',list:E.filter(e=>e.by==='base')};
@@ -657,7 +657,8 @@ w['exercises/'+UID]={ownerName:PROFILE.author||PROFILE.name,list:E.filter(e=>e.b
 for(const p in w){const j=JSON.stringify(w[p]);if(SYNC[p]===j)continue;if(SYNC[p]===undefined&&LASTGET[p]!==undefined){const same=LASTGET[p]===j;delete LASTGET[p];if(same){SYNC[p]=j;continue}}SYNC[p]=j;if(p===tdp)S.rsig=sigOf(w[p]);S.wip=(S.wip||0)+1;(p.indexOf('exercises/')===0?exSafeSet(p,j):DB.doc(p).set(JSON.parse(j))).then(()=>{S.wip--;S.lastW=Date.now()}).catch(e=>{S.wip--;delete SYNC[p];fail(e)})}}
 function migRb(){for(const a in GS){if(a==='coach')continue;const g=GS[a];if(g&&g.ks&&!g.rb){const i=g.ks.indexOf('defensa');if(i>=0&&!g.ks.includes('rebote'))g.ks.splice(i+1,0,'rebote');g.rb=1}}}
 function applyGS(){migRb();const mg={};for(const a in GS){if(a==='coach')continue;const k=gk(+a);if(k!==+a){if(!GS[k]&&!mg[k])mg[k]=GS[a];delete GS[a]}}Object.assign(GS,mg);for(const a in GS){if(!GS[a]||typeof GS[a]!=='object'){delete GS[a];continue}GUIDE[a]=Object.assign({},GUIDE[a],GS[a])}}
-async function loadTeamOnline(){loadTeamData(true);S.rd=null;if(!TEAM)return;let d;const sdP=TEAM.shared?DB.doc(P('sd_'+TEAM.id)).get().catch(()=>null):null;
+async function loadTeamOnline(){S.tnl=1;await loadTeamOnline_();S.tnl=0}
+async function loadTeamOnline_(){loadTeamData(true);S.rd=null;if(!TEAM)return;let d;const sdP=TEAM.shared?DB.doc(P('sd_'+TEAM.id)).get().catch(()=>null):null;
 try{d=await DB.doc(TP()).get()}catch(e){if(TEAM.shared){toast('Ya no tienes acceso a este equipo');STEAMS=STEAMS.filter(t=>t!==TEAM);TEAM=TEAMS[0]||STEAMS[0]||null;return loadTeamOnline()}throw e}
 if(d.exists){const x=cl(d.data());saved=x.saved||[];PL=x.players||[];MT=x.matches||[];PY=x.plays||[];VC=x.vc||[];TRN=x.tr||[];HOR=x.hor||[];HPUB=x.hpub!==0;HCX=x.hcx||[];if(TEAM.shared)S.rd=x.draft||{};else if(x.draft&&x.draft.items)S.plan=x.draft;GS=x.guide||{};applyGS();S.rsig=sigOf(x)}else S.rsig=sigOf({});
 if(TEAM&&TEAM.shared){try{const m=await sdP;if(m&&m.exists){const y=cl(m.data());if(y.draft&&y.draft.items)S.plan=y.draft}}catch(e){}}
@@ -2409,7 +2410,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target&&ev.targ
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&/^Arrow(Left|Right|Up|Down)$/.test(ev.key)&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();const st=ev.shiftKey?5:1,dx=ev.key==='ArrowLeft'?-st:ev.key==='ArrowRight'?st:0,dy=ev.key==='ArrowUp'?-st:ev.key==='ArrowDown'?st:0,e=ED.els[ED.sel];for(const k of ['x','x1','x2','cx'])if(k in e)e[k]+=dx;for(const k of ['y','y1','y2','cy'])if(k in e)e[k]+=dy;renderEd();return}
 if($('#ed')&&ED.sel!==null&&ED.els[ED.sel]&&(ev.key==='Delete'||ev.key==='Backspace')&&!ev.target.isContentEditable&&!/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName||'')){ev.preventDefault();ED.els.splice(ED.sel,1);ED.sel=null;render()}});
 
-const APPBUILD='2026-11-25-esc31';
+const APPBUILD='2026-11-28-esc32';
 function verCheck(){gcall('ping').then(function(r){var sb=(r&&r.build)||'antiga';if(sb!==APPBUILD){var d=document.createElement('div');d.id='__ver';d.style.cssText='background:#fff3cd;border:1px solid #e0a800;color:#533f03;padding:10px;margin:10px;border-radius:8px;font-size:14px';d.textContent='⚠️ El servidor té la versió «'+sb+'» i l’aplicació la «'+APPBUILD+'». A l’editor d’Apps Script: Desplega → Gestiona els desplegaments → llapis → Nova versió → Desplega. Després recarrega amb Ctrl+Maj+R.';document.body.insertBefore(d,document.body.firstChild)}}).catch(function(){})}
 render();boot();verCheck();
 </script>
